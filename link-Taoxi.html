@@ -6,19 +6,21 @@
   <title>產品連結一鍵複製面板</title>
   <style>
     :root {
+
       --text: #000000;      /* 文字 */
       --muted: #9ca3af;     /* 次要文字 */
       --accent: #22c55e;    /* 成功綠 */
       --accent2:#3b82f6;    /* 複製藍 */
+      --bg:#E9F2FB;  /* 背景 */
       --radius: 12px;
     }
     * { box-sizing: border-box; }
     body {
       margin:0; padding:16px;
-      background: var(--bg); color: var(--text);
+      color: var(--text);
       font: 500 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "Helvetica Neue", Arial;
     }
-    h1 { font-size: 18px; margin: 0 0 12px; }
+    h1 { font-size: 18px; margin: 0 0 12px; background: var(--bg)}
     p  { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
     .grid {
       display: grid;
@@ -26,9 +28,6 @@
       gap: 12px;
     }
     .card {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
       padding: 12px;
       display: grid; gap: 8px;
     }
