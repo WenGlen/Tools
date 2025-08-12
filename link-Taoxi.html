@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>產品連結一鍵複製面板</title>
+  <style>
+    :root {
+      --text: #000000;      /* 文字 */
+      --muted: #9ca3af;     /* 次要文字 */
+      --accent: #22c55e;    /* 成功綠 */
+      --accent2:#3b82f6;    /* 複製藍 */
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin:0; padding:16px;
+      background: var(--bg); color: var(--text);
+      font: 500 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "Helvetica Neue", Arial;
+    }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    p  { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid; gap: 8px;
+    }
+    .title { font-size: 24px; font-weight: 600; word-break: break-word; }
+    .url   { font-size: 8px; color: var(--muted); word-break: break-all; }
+    .btns  { display: flex; gap: 8px; }
+    button {
+      appearance: none; border:0; cursor: pointer;
+      padding: 8px 10px; border-radius: 10px;
+      background: var(--accent2); color: #fff; font-weight: 600; font-size: 14px;
+      flex: 0 0 auto;
+    }
+    button.secondary {
+      background: transparent; color: var(--text);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .toast {
+      position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+      background: #111827; color: #fff; padding: 10px 14px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  </style>
+</head>
+<body>
+  <h1>一鍵複製區</h1>
+
+  <div id="list" class="grid"></div>
+  <div id="toast" class="toast">已複製連結！</div>
+
+  <script>
+    // ① 把這裡換成你的產品清單（title：顯示名稱，url：Notion 分享連結）
+    const products = [
+      { title: "陶禧藝術 常態班資訊", url: "https://glenwen.notion.site/24daa54a35aa81e7b8a9f55fdb9cb04f?source=copy_link" },
+      { title: "手捏花器-體驗課", url: "https://glenwen.notion.site/24daa54a35aa8123b9bdd5acf1660c07?source=copy_link" },
+      { title: "拉坯-體驗課", url: "https://glenwen.notion.site/24daa54a35aa817795a2d9bd06c0dc53?source=copy_link" },
+      { title: "藝術陶板牆-客製化製作", url: "https://glenwen.notion.site/24daa54a35aa81e3bdc5fea0fab604a2?source=copy_link" },
+      { title: "釉彩磁磚牆-客製化製作", url: "https://glenwen.notion.site/24daa54a35aa8177a71ec00d9fac1e4a?source=copy_link" },
+      { title: "材料販售&窯燒費用", url: "https://glenwen.notion.site/1b6aa54a35aa8078a0ccf76b3eaf420b?source=copy_link" },
+    //{ title: "", url: "" },
+    ];
+
+    // ② 產生卡片
+    const listEl = document.getElementById('list');
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="title">${escapeHtml(p.title)}</div>
+        <div class="url">${escapeHtml(p.url)}</div>
+        <div class="btns">
+          <button data-copy="${encodeURIComponent(p.url)}">複製連結</button>
+          <button class="secondary" onclick="window.open('${p.url}','_blank')">開啟頁面</button>
+        </div>`;
+      listEl.appendChild(card);
+    });
+
+    // ③ 綁定複製
+    listEl.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-copy]');
+      if (!btn) return;
+      const text = decodeURIComponent(btn.getAttribute('data-copy'));
+      const ok = await copyToClipboard(text);
+      showToast(ok ? '已複製連結！' : '複製失敗，請長按連結自行複製');
+    });
+
+    // ✅ 可靠的複製實作（行動裝置支援）
+    async function copyToClipboard(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch(e) { /* 走 fallback */ }
+      // Fallback：建立隱藏 textarea
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { const ok = document.execCommand('copy'); return ok; }
+      catch(e){ return false; }
+      finally { document.body.removeChild(ta); }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(showToast._tid);
+      showToast._tid = setTimeout(()=> t.classList.remove('show'), 1400);
+    }
+
+    function escapeHtml(s){
+      return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+  </script>
+</body>
+</html>
